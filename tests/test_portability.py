@@ -5,6 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from scripts.aggregate_benchmark import generate_benchmark
 from scripts.improve_description import improve_description
 from scripts.quick_validate import validate_skill
 from scripts.run_eval import run_eval
@@ -94,6 +95,25 @@ class RunnerProtocolTests(unittest.TestCase):
         )
         self.assertEqual(result["results"][0]["errors"], 1)
         self.assertFalse(result["results"][0]["pass"])
+
+
+class BenchmarkTests(unittest.TestCase):
+    def test_reports_actual_runs_per_configuration(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            run = Path(temp_dir) / "eval-1" / "with_skill" / "run-1"
+            run.mkdir(parents=True)
+            (run / "grading.json").write_text(
+                json.dumps(
+                    {
+                        "summary": {"pass_rate": 1, "passed": 1, "failed": 0, "total": 1},
+                        "expectations": [],
+                    }
+                )
+            )
+
+            benchmark = generate_benchmark(Path(temp_dir))
+
+            self.assertEqual(benchmark["metadata"]["runs_per_configuration"], 1)
 
 
 class FrontmatterValidationTests(unittest.TestCase):
